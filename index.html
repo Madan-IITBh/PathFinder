@@ -101,6 +101,73 @@
         }
     </script>
 </body>
+</html>        <label>Technical Interests & Domains</label>
+        <input type="text" id="interests" placeholder="e.g., GPU programming, NLP, data pipelines">
+        
+        <button onclick="getRecommendations()" id="submitBtn">Generate Optimal Schedule</button>
+    </div>
+
+    <div class="card" id="results" style="display: none; margin-top: 20px;">
+        <h3 style="color:#2ecc71; margin-top: 0;">Target Alignment Strategy</h3>
+        <p id="strategy" style="background: #1b382b; padding: 1rem; border-radius: 4px; font-size: 0.9rem;"></p>
+        
+        <h3 style="color:#2ecc71">Mandatory Branch Cores</h3>
+        <div id="mandatoryList"></div>
+        
+        <h3 style="color:#2ecc71">Recommended Career Electives</h3>
+        <div id="electiveList"></div>
+        
+        <button onclick="location.reload()" style="margin-top: 20px;">Start Over</button>
+    </div>
+
+    <script>
+        async function getRecommendations() {
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Analyzing Catalog with Gemma 4...";
+            btn.disabled = true;
+
+            const payload = {
+                branch: document.getElementById('branch').value,
+                semester: document.getElementById('semester').value,
+                dream_role: document.getElementById('role').value,
+                interests: document.getElementById('interests').value
+            };
+
+            try {
+                // REPLACE THIS URL WITH YOUR ACTUAL RENDER LIVE URL
+                const res = await fetch('https://YOUR_RENDER_APP_NAME.onrender.com/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await res.json();
+                
+                if(result.success) {
+                    document.getElementById('inputForm').style.display = 'none';
+                    document.getElementById('results').style.display = 'block';
+                    document.getElementById('strategy').innerText = result.data.strategy;
+                    
+                    document.getElementById('mandatoryList').innerHTML = result.data.mandatory.map(c => 
+                        `<div class="course"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
+                    ).join('');
+                    
+                    document.getElementById('electiveList').innerHTML = result.data.electives.map(c => 
+                        `<div class="course" style="border-left-color: #3498db;"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
+                    ).join('');
+                } else {
+                    alert("Gemma Output Error: " + result.error);
+                    btn.innerText = "Generate Optimal Schedule";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert("Server Connection Failed. Ensure your Render backend is live and the fetch URL in index.html is updated.");
+                btn.innerText = "Generate Optimal Schedule";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
 </html>    <header>
       <h1>PathFinder</h1>
       <p>IIT Bhilai Course Registration Assistant</p>
