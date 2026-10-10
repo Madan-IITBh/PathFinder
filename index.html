@@ -2,320 +2,196 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>OptiCourse | IIT Bhilai</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder - IIT Bhilai Course Assistant</title>
     <style>
-        body { font-family: sans-serif; background: #0e1e17; color: #fff; padding: 2rem; }
-        .card { background: #142a20; padding: 2rem; border-radius: 8px; border: 1px solid #234433; max-width: 600px; margin: 0 auto; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 4px; border: none; box-sizing: border-box; }
-        input, select { background: #0c1812; color: #fff; border: 1px solid #234433; }
-        button { background: #2ecc71; color: #000; font-weight: bold; cursor: pointer; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .course { border-left: 3px solid #2ecc71; background: #0b1812; padding: 10px; margin-bottom: 10px; border-radius: 0 4px 4px 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header img {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .checkbox-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-group input {
+            margin-right: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 5px;
+            display: none;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
-    <div class="card" id="inputForm">
-        <h2 style="color: #2ecc71; margin-top: 0;">OptiCourse Assistant</h2>
-        <p style="color: #9eb3a4; font-size: 0.9rem; margin-bottom: 1.5rem;">IIT Bhilai Course Registration & Career Alignment</p>
-        
-        <label>Enrolled Branch</label>
-        <select id="branch">
-            <option value="CSE">Computer Science & Engineering</option>
-            <option value="DSAI">Data Science & AI</option>
-            <option value="ECE">Electronics & Communication</option>
-        </select>
-        
-        <label>Target Semester</label>
-        <select id="semester">
-            <option value="3">Semester 3</option>
-            <option value="5">Semester 5</option>
-        </select>
-        
-        <label>Dream Future Role</label>
-        <input type="text" id="role" placeholder="e.g., Machine Learning Systems Engineer">
-        
-        <label>Technical Interests & Domains</label>
-        <input type="text" id="interests" placeholder="e.g., GPU programming, NLP, data pipelines">
-        
-        <button onclick="getRecommendations()" id="submitBtn">Generate Optimal Schedule</button>
+
+    <div class="header">
+        <img src="{{ url_for('static', filename='logo_iit_bhilai.png') }}" alt="IIT Bhilai Logo">
+        <h1>Pathfinder</h1>
+        <p>Your AI Course Registration Assistant</p>
     </div>
 
-    <div class="card" id="results" style="display: none; margin-top: 20px;">
-        <h3 style="color:#2ecc71; margin-top: 0;">Target Alignment Strategy</h3>
-        <p id="strategy" style="background: #1b382b; padding: 1rem; border-radius: 4px; font-size: 0.9rem;"></p>
-        
-        <h3 style="color:#2ecc71">Mandatory Branch Cores</h3>
-        <div id="mandatoryList"></div>
-        
-        <h3 style="color:#2ecc71">Recommended Career Electives</h3>
-        <div id="electiveList"></div>
-        
-        <button onclick="location.reload()" style="margin-top: 20px;">Start Over</button>
-    </div>
+    <div class="container">
+        <form id="pathfinderForm">
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <select id="year" required>
+                    <option value="" disabled selected>Select Year</option>
+                    <option value="1st">1st Year</option>
+                    <option value="2nd">2nd Year</option>
+                    <option value="3rd">3rd Year</option>
+                    <option value="4th">4th Year</option>
+                </select>
+            </div>
 
-    <script>
-        async function getRecommendations() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "Analyzing Catalog with Gemma 4...";
-            btn.disabled = true;
+            <div class="form-group">
+                <label for="semester">Semester:</label>
+                <select id="semester" required>
+                    <option value="" disabled selected>Select Semester</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option>
+                    <option value="8">Semester 8</option>
+                </select>
+            </div>
 
-            const payload = {
-                branch: document.getElementById('branch').value,
-                semester: document.getElementById('semester').value,
-                dream_role: document.getElementById('role').value,
-                interests: document.getElementById('interests').value
-            };
+            <div class="form-group">
+                <label for="branch">Branch:</label>
+                <select id="branch" required>
+                    <option value="" disabled selected>Select Branch</option>
+                    <option value="CSE">Computer Science and Engineering (CSE)</option>
+                    <option value="DSAI">Data Science and AI (DSAI)</option>
+                    <option value="ECE">Electronics and Communication (ECE)</option>
+                    <option value="EE">Electrical Engineering (EE)</option>
+                    <option value="ME">Mechanical Engineering (ME)</option>
+                    <option value="MT">Mechatronics (MT)</option>
+                    <option value="MSME">Materials Science and Metallurgical Eng. (MSME)</option>
+                </select>
+            </div>
 
-            try {
-                // REPLACE THIS URL WITH YOUR ACTUAL RENDER LIVE URL
-                const res = await fetch('https://YOUR_RENDER_APP_NAME.onrender.com/api/recommend', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await res.json();
-                
-                if(result.success) {
-                    document.getElementById('inputForm').style.display = 'none';
-                    document.getElementById('results').style.display = 'block';
-                    document.getElementById('strategy').innerText = result.data.strategy;
-                    
-                    document.getElementById('mandatoryList').innerHTML = result.data.mandatory.map(c => 
-                        `<div class="course"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
-                    ).join('');
-                    
-                    document.getElementById('electiveList').innerHTML = result.data.electives.map(c => 
-                        `<div class="course" style="border-left-color: #3498db;"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
-                    ).join('');
-                } else {
-                    alert("Gemma Output Error: " + result.error);
-                    btn.innerText = "Generate Optimal Schedule";
-                    btn.disabled = false;
-                }
-            } catch (e) {
-                alert("Server Connection Failed. Ensure your Render backend is live and the fetch URL in index.html is updated.");
-                btn.innerText = "Generate Optimal Schedule";
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>        <label>Technical Interests & Domains</label>
-        <input type="text" id="interests" placeholder="e.g., GPU programming, NLP, data pipelines">
-        
-        <button onclick="getRecommendations()" id="submitBtn">Generate Optimal Schedule</button>
-    </div>
+            <div class="form-group">
+                <label>Interested Job Roles (Select all that apply):</label>
+                <div class="checkbox-grid">
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Software Engineer"> Software Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Data Scientist"> Data Scientist</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="AI/ML Engineer"> AI/ML Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Hardware Engineer"> Hardware Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="VLSI Design Engineer"> VLSI Design</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Embedded Systems Engineer"> Embedded Systems</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Control Systems Engineer"> Control Systems</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Mechanical Engineer"> Mechanical Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Robotics Engineer"> Robotics Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Materials Scientist"> Materials Scientist</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Automotive Engineer"> Automotive Engineer</label></div>
+                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Product Manager"> Product Manager</label></div>
+                </div>
+            </div>
 
-    <div class="card" id="results" style="display: none; margin-top: 20px;">
-        <h3 style="color:#2ecc71; margin-top: 0;">Target Alignment Strategy</h3>
-        <p id="strategy" style="background: #1b382b; padding: 1rem; border-radius: 4px; font-size: 0.9rem;"></p>
-        
-        <h3 style="color:#2ecc71">Mandatory Branch Cores</h3>
-        <div id="mandatoryList"></div>
-        
-        <h3 style="color:#2ecc71">Recommended Career Electives</h3>
-        <div id="electiveList"></div>
-        
-        <button onclick="location.reload()" style="margin-top: 20px;">Start Over</button>
-    </div>
-
-    <script>
-        async function getRecommendations() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "Analyzing Catalog with Gemma 4...";
-            btn.disabled = true;
-
-            const payload = {
-                branch: document.getElementById('branch').value,
-                semester: document.getElementById('semester').value,
-                dream_role: document.getElementById('role').value,
-                interests: document.getElementById('interests').value
-            };
-
-            try {
-                // REPLACE THIS URL WITH YOUR ACTUAL RENDER LIVE URL
-                const res = await fetch('https://YOUR_RENDER_APP_NAME.onrender.com/api/recommend', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const result = await res.json();
-                
-                if(result.success) {
-                    document.getElementById('inputForm').style.display = 'none';
-                    document.getElementById('results').style.display = 'block';
-                    document.getElementById('strategy').innerText = result.data.strategy;
-                    
-                    document.getElementById('mandatoryList').innerHTML = result.data.mandatory.map(c => 
-                        `<div class="course"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
-                    ).join('');
-                    
-                    document.getElementById('electiveList').innerHTML = result.data.electives.map(c => 
-                        `<div class="course" style="border-left-color: #3498db;"><b>${c.code}: ${c.name}</b> (Slot: ${c.slot})<br><small style="color:#d0ded4;">${c.reason}</small></div>`
-                    ).join('');
-                } else {
-                    alert("Gemma Output Error: " + result.error);
-                    btn.innerText = "Generate Optimal Schedule";
-                    btn.disabled = false;
-                }
-            } catch (e) {
-                alert("Server Connection Failed. Ensure your Render backend is live and the fetch URL in index.html is updated.");
-                btn.innerText = "Generate Optimal Schedule";
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>    <header>
-      <h1>PathFinder</h1>
-      <p>IIT Bhilai Course Registration Assistant</p>
-    </header>
-
-    <div class="layout">
-      <!-- Input Panel -->
-      <div class="form-card">
-        <form id="regForm">
-          <div class="form-group">
-            <label>Program</label>
-            <select id="program">
-              <option value="BTech">B.Tech</option>
-              <option value="MTech">M.Tech</option>
-              <option value="MSc">M.Sc</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Current Year</label>
-            <select id="year">
-              <option value="1">1st Year</option>
-              <option value="2" selected>2nd Year</option>
-              <option value="3">3rd Year</option>
-              <option value="4">4th Year</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Target Semester</label>
-            <select id="semester">
-              <option value="1">Semester 1</option>
-              <option value="2">Semester 2</option>
-              <option value="3" selected>Semester 3</option>
-              <option value="4">Semester 4</option>
-              <option value="5">Semester 5</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Enrolled Branch</label>
-            <select id="branch">
-              <option value="CSE" selected>Computer Science & Engineering</option>
-              <option value="DSAI">Data Science & AI</option>
-              <option value="ECE">Electronics & Communication</option>
-              <option value="EE">Electrical Engineering</option>
-              <option value="ME">Mechanical Engineering</option>
-              <option value="MSME">Materials Science & Metallurgical</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Secondary Branch of Interest (Elective focus)</label>
-            <select id="target_branch">
-              <option value="DSAI" selected>Data Science & AI</option>
-              <option value="CSE">Computer Science & Engineering</option>
-              <option value="ECE">Electronics & Communication</option>
-              <option value="MT">Mechatronics</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Dream Future Role</label>
-            <input type="text" id="dream_role" value="Machine Learning Systems Engineer" required>
-          </div>
-          <div class="form-group">
-            <label>Technical Interests & Domains</label>
-            <textarea id="interests" rows="3">Deep learning infrastructure, GPU programming, low-latency data pipelines</textarea>
-          </div>
-          <button type="submit" id="submitBtn">Generate Optimal Schedule</button>
+            <button type="submit" id="submitBtn">Get Course Recommendations</button>
         </form>
-      </div>
 
-      <!-- Results Display -->
-      <div class="results-card">
-        <div id="placeholder" style="color: var(--subtext); text-align: center; margin-top: 4rem;">
-          Configure your details on the left and submit to view personalized recommendations.
-        </div>
-        <div id="results" style="display: none;">
-          <div class="strategy-box">
-            <strong>Target Alignment Strategy:</strong>
-            <p id="strategyText" style="margin-top: 0.3rem;"></p>
-          </div>
-          <h3 style="margin-bottom: 0.8rem; font-size: 1rem; color: var(--accent);">Mandatory Branch Cores</h3>
-          <div id="mandatoryContainer"></div>
-
-          <h3 style="margin: 1.2rem 0 0.8rem 0; font-size: 1rem; color: var(--accent);">Recommended Career Electives</h3>
-          <div id="electiveContainer"></div>
-        </div>
-      </div>
+        <div id="result"></div>
     </div>
-  </div>
 
-  <script>
-    document.getElementById("regForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById("submitBtn");
-      btn.innerText = "Analyzing Catalog...";
-      btn.disabled = true;
+    <script>
+        document.getElementById('pathfinderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            btn.innerText = "Analyzing curriculum with AI...";
+            btn.disabled = true;
 
-      const payload = {
-        program: document.getElementById("program").value,
-        year: document.getElementById("year").value,
-        semester: document.getElementById("semester").value,
-        branch: document.getElementById("branch").value,
-        target_branch: document.getElementById("target_branch").value,
-        dream_role: document.getElementById("dream_role").value,
-        interests: document.getElementById("interests").value
-      };
+            const year = document.getElementById('year').value;
+            const semester = document.getElementById('semester').value;
+            const branch = document.getElementById('branch').value;
+            
+            const roles = [];
+            document.querySelectorAll('input[name="roles"]:checked').forEach(cb => roles.push(cb.value));
 
-      try {
-        const res = await fetch("/api/recommend", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: json.stringify(payload)
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ year, semester, branch, job_roles: roles })
+                });
+                
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `<strong>AI Recommendation:</strong><br><br>${data.recommendation.replace(/\n/g, '<br>')}`;
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = "Error generating recommendation. Please try again.";
+            } finally {
+                btn.innerText = "Get Course Recommendations";
+                btn.disabled = false;
+            }
         });
-        const jsonRes = await res.json();
-        if (jsonRes.success) {
-          renderResults(jsonRes.data);
-        } else {
-          alert("Error: " + jsonRes.error);
-        }
-      } catch (err) {
-        alert("Failed to reach server");
-      } finally {
-        btn.innerText = "Generate Optimal Schedule";
-        btn.disabled = false;
-      }
-    });
-
-    function renderResults(data) {
-      document.getElementById("placeholder").style.display = "none";
-      document.getElementById("results").style.display = "block";
-      document.getElementById("strategyText").innerText = data.career_alignment_strategy;
-
-      const mContainer = document.getElementById("mandatoryContainer");
-      mContainer.innerHTML = data.mandatory_courses.map(c => `
-        <div class="course-item">
-          <div class="course-title">${c.code}: ${c.name}</div>
-          <div class="course-meta">Category: ${c.category} | Lecture Slot: ${c.slot}</div>
-          <div class="course-reason">${c.reason}</div>
-        </div>
-      `).join('');
-
-      const eContainer = document.getElementById("electiveContainer");
-      eContainer.innerHTML = data.recommended_electives.map(c => `
-        <div class="course-item" style="border-left-color: #3498db;">
-          <div class="course-title">${c.code}: ${c.name}</div>
-          <div class="course-meta">Category: ${c.category} | Lecture Slot: ${c.slot}</div>
-          <div class="course-reason">${c.reason}</div>
-        </div>
-      `).join('');
-    }
-  </script>
+    </script>
 </body>
 </html>
