@@ -3,320 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pathfinder | IIT Bhilai Course Assistant</title>
+    <title>PathFinder - Premium Career Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --primary-dark: #3730a3;
+            --bg-color: #f4f7f9;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
             margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #e0e7ff 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, #e0e7ff 0%, transparent 40%);
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-main);
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-        .chat-container {
+
+        .container {
             width: 100%;
-            max-width: 450px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 80vh;
+            max-width: 750px;
         }
-        .header {
-            background-color: #004d40;
-            color: white;
-            padding: 15px;
+
+        /* Header Styling */
+        .header-section {
             text-align: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
         }
-        .chat-box {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+
+        .logo {
+            width: 100px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
         }
-        .message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            line-height: 1.4;
-            word-wrap: break-word;
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
         }
-        .user-msg {
-            background-color: #e0f2f1;
-            color: #004d40;
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.6;
         }
-        .bot-msg {
-            background-color: #f1f1f1;
-            color: #333;
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-        }
-        .input-area {
-            display: flex;
-            padding: 10px;
-            background: #fff;
-            border-top: 1px solid #ddd;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
+
+        /* Form Card Styling */
+        .form-card {
+            background: var(--surface);
             border-radius: 20px;
-            outline: none;
-            font-size: 1rem;
+            padding: 35px;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            animation: fadeIn 0.8s ease-out;
         }
-        button {
-            background-color: #004d40;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin-left: 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover {
-            background-color: #00332a;
-        }
-        .loading {
-            align-self: flex-start;
-            color: #888;
-            font-style: italic;
-            font-size: 0.9rem;
-            display: none;
-        }
-    </style>
-</head>
-<body>
 
-<div class="chat-container">
-    <div class="header">Pathfinder 🧭<br><small style="font-weight: normal; font-size: 0.8rem;">IIT Bhilai Course Assistant</small></div>
-    <div class="chat-box" id="chat-box">
-        <div class="message bot-msg">Hello! I'm Pathfinder. What do you need help with regarding your IIT Bhilai courses?</div>
-    </div>
-    <div class="loading" id="loading">Pathfinder is typing...</div>
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Ask about registration, prerequisites..." onkeypress="handleKeyPress(event)">
-        <button onclick="sendMessage()">Send</button>
-    </div>
-</div>
-
-<script>
-    async function sendMessage() {
-        const inputField = document.getElementById("user-input");
-        const message = inputField.value.trim();
-        if (!message) return;
-
-        appendMessage("user-msg", message);
-        inputField.value = "";
-        
-        document.getElementById("loading").style.display = "block";
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message })
-            });
-            
-            const result = await response.json();
-            document.getElementById("loading").style.display = "none";
-
-            if (result.success && result.data && result.data.reply) {
-                appendMessage("bot-msg", result.data.reply);
-            } else {
-                appendMessage("bot-msg", "Oops, I encountered an error. Please try again.");
-                console.error("Error details:", result.error);
-            }
-        } catch (error) {
-            document.getElementById("loading").style.display = "none";
-            appendMessage("bot-msg", "Network error. Make sure the server is running.");
-            console.error(error);
-        }
-    }
-
-    function appendMessage(className, text) {
-        const chatBox = document.getElementById("chat-box");
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "message " + className;
-        msgDiv.innerText = text;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    function handleKeyPress(event) {
-        if (event.key === "Enter") sendMessage();
-    }
-</script>
-
-</body>
-</html>        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 8px;
-        }
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .checkbox-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .checkbox-group label {
-            font-weight: normal;
+        .question-header {
             display: flex;
             align-items: center;
+            margin-bottom: 20px;
         }
-        .checkbox-group input {
-            margin-right: 10px;
+
+        .question-number {
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 15px;
+            flex-shrink: 0;
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #0056b3;
+
+        .question-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Selection Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .options-grid.wide {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+
+        .option-label {
+            display: block;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .option-label input[type="radio"] {
+            display: none;
+        }
+
+        .option-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: center;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .option-label:hover .option-card {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.1);
+        }
+
+        .option-label input[type="radio"]:checked + .option-card {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Submit Button */
+        .submit-wrapper {
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 60px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 50px;
+            padding: 16px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: background 0.3s;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
         }
-        button:hover {
-            background-color: #004494;
+
+        .btn-submit:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 30px -5px rgba(79, 70, 229, 0.5);
         }
-        #result {
-            margin-top: 30px;
-            padding: 20px;
-            background: #e9ecef;
-            border-radius: 5px;
+
+        /* Results View */
+        #results-view {
             display: none;
-            white-space: pre-wrap;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .semester-group {
+            margin-bottom: 40px;
+        }
+
+        .semester-badge {
+            display: inline-block;
+            background: var(--text-main);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .course-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .course-item:hover {
+            transform: translateX(5px);
+            border-color: #cbd5e1;
+        }
+
+        .course-item.recommended {
+            border: 2px solid var(--primary);
+            background: linear-gradient(to right, #ffffff, var(--primary-light));
+        }
+
+        .course-code {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .course-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+
+        .course-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 15px;
+        }
+
+        .star-badge {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .course-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <img src="{{ url_for('static', filename='logo_iit_bhilai.png') }}" alt="IIT Bhilai Logo">
-        <h1>Pathfinder</h1>
-        <p>Your AI Course Registration Assistant</p>
+    <div class="container" id="form-view">
+        <div class="header-section">
+            <img src="logo_iit_bhilai.png" alt="IIT Bhilai Logo" class="logo" onerror="this.style.display='none'">
+            <h1>PathFinder</h1>
+            <p class="subtitle">Tell us about your academic status and career aspirations, and we'll map out the perfect course trajectory for you.</p>
+        </div>
+
+        <div class="form-card" style="animation-delay: 0.1s;">
+            <div class="question-header">
+                <div class="question-number">1</div>
+                <h2 class="question-title">What is your Discipline?</h2>
+            </div>
+            <div class="options-grid" id="branch-options"></div>
+        </div>
+
+        <div class="form-card" style="animation-delay: 0.2s;">
+            <div class="question-header">
+                <div class="question-number">2</div>
+                <h2 class="question-title">What is your Current Semester?</h2>
+            </div>
+            <div class="options-grid" id="sem-options"></div>
+        </div>
+
+        <div class="form-card" style="animation-delay: 0.3s;">
+            <div class="question-header">
+                <div class="question-number">3</div>
+                <h2 class="question-title">What is your Target Career Role?</h2>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin: -10px 0 20px 45px;">Select your primary interest to help us prioritize electives.</p>
+            <div class="options-grid wide" id="role-options"></div>
+        </div>
+
+        <div class="submit-wrapper" style="animation-delay: 0.4s; animation: fadeIn 0.8s ease-out both;">
+            <button class="btn-submit" onclick="submitForm()">Generate My Roadmap ✨</button>
+        </div>
     </div>
 
-    <div class="container">
-        <form id="pathfinderForm">
-            <div class="form-group">
-                <label for="year">Year:</label>
-                <select id="year" required>
-                    <option value="" disabled selected>Select Year</option>
-                    <option value="1st">1st Year</option>
-                    <option value="2nd">2nd Year</option>
-                    <option value="3rd">3rd Year</option>
-                    <option value="4th">4th Year</option>
-                </select>
-            </div>
+    <div class="container" id="results-view">
+        <div class="header-section">
+            <img src="logo_iit_bhilai.png" alt="IIT Bhilai Logo" class="logo" style="width: 70px;" onerror="this.style.display='none'">
+            <h1>Your Career Roadmap</h1>
+            <p class="subtitle" id="results-desc"></p>
+        </div>
+        
+        <div id="roadmap-content"></div>
 
-            <div class="form-group">
-                <label for="semester">Semester:</label>
-                <select id="semester" required>
-                    <option value="" disabled selected>Select Semester</option>
-                    <option value="1">Semester 1</option>
-                    <option value="2">Semester 2</option>
-                    <option value="3">Semester 3</option>
-                    <option value="4">Semester 4</option>
-                    <option value="5">Semester 5</option>
-                    <option value="6">Semester 6</option>
-                    <option value="7">Semester 7</option>
-                    <option value="8">Semester 8</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="branch">Branch:</label>
-                <select id="branch" required>
-                    <option value="" disabled selected>Select Branch</option>
-                    <option value="CSE">Computer Science and Engineering (CSE)</option>
-                    <option value="DSAI">Data Science and AI (DSAI)</option>
-                    <option value="ECE">Electronics and Communication (ECE)</option>
-                    <option value="EE">Electrical Engineering (EE)</option>
-                    <option value="ME">Mechanical Engineering (ME)</option>
-                    <option value="MT">Mechatronics (MT)</option>
-                    <option value="MSME">Materials Science and Metallurgical Eng. (MSME)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Interested Job Roles (Select all that apply):</label>
-                <div class="checkbox-grid">
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Software Engineer"> Software Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Data Scientist"> Data Scientist</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="AI/ML Engineer"> AI/ML Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Hardware Engineer"> Hardware Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="VLSI Design Engineer"> VLSI Design</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Embedded Systems Engineer"> Embedded Systems</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Control Systems Engineer"> Control Systems</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Mechanical Engineer"> Mechanical Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Robotics Engineer"> Robotics Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Materials Scientist"> Materials Scientist</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Automotive Engineer"> Automotive Engineer</label></div>
-                    <div class="checkbox-group"><label><input type="checkbox" name="roles" value="Product Manager"> Product Manager</label></div>
-                </div>
-            </div>
-
-            <button type="submit" id="submitBtn">Get Course Recommendations</button>
-        </form>
-
-        <div id="result"></div>
+        <div class="submit-wrapper">
+            <button class="btn-submit" style="background: var(--text-muted); box-shadow: none;" onclick="window.location.reload()">Start Over</button>
+        </div>
     </div>
 
     <script>
-        document.getElementById('pathfinderForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submitBtn');
-            const resultDiv = document.getElementById('result');
-            
-            btn.innerText = "Analyzing curriculum with AI...";
-            btn.disabled = true;
+        // Database
+        const dbData = {
+            "CSE": [{"Course Code": "CSL100", "Course Name": "Introduction to programming", "Credits": "4.0", "Sem": "1", "Category": "IC"}, {"Course Code": "MAL403", "Course Name": "Probability and Statistics", "Credits": "4.0", "Sem": "1", "Category": "PC"}, {"Course Code": "CSL301", "Course Name": "Operating Systems", "Credits": "4.0", "Sem": "3", "Category": "PC"}, {"Course Code": "CSL202", "Course Name": "Data Structures", "Credits": "4.0", "Sem": "3", "Category": "PC"}, {"Course Code": "DSL201", "Course Name": "Mathematical Foundations for Data Science", "Credits": "4.0", "Sem": "3", "Category": "PC"}, {"Course Code": "CSL251", "Course Name": "Computer Organisation and Architecture", "Credits": "4.0", "Sem": "4", "Category": "PC"}, {"Course Code": "CSL252", "Course Name": "Design and Analysis of Algorithms", "Credits": "4.0", "Sem": "4", "Category": "PC"}, {"Course Code": "CSL303", "Course Name": "Database Management Systems", "Credits": "4.0", "Sem": "5", "Category": "PC"}, {"Course Code": "CS1304", "Course Name": "Artificial Intelligence", "Credits": "4.0", "Sem": "5", "Category": "PC"}, {"Course Code": "CSP352", "Course Name": "AI augmented Software Development", "Credits": "2.0", "Sem": "6", "Category": "PC"}],
+            "DSAI": [{"Course Code": "CSL100", "Course Name": "Introduction to programming", "Credits": "4.0", "Sem": "1", "Category": "IC"}, {"Course Code": "DSL201", "Course Name": "Mathematical Foundations for Data Science", "Credits": "4.0", "Sem": "3", "Category": "PC"}, {"Course Code": "DSL251", "Course Name": "Data Analytics and visualization", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "CS1304", "Course Name": "Artificial Intelligence", "Credits": "4.0", "Sem": "5", "Category": "PC"}, {"Course Code": "DSL351", "Course Name": "Big Data Analytics", "Credits": "3.0", "Sem": "6", "Category": "PC"}],
+            "ECE": [{"Course Code": "ECL202", "Course Name": "Signals and Systems", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "ECL201", "Course Name": "Digital Design", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "ECL203", "Course Name": "Introduction to Electronics", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "ECL211", "Course Name": "Microcontroller and Embedded System", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "ECL214", "Course Name": "Solid State devices", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "ECL304", "Course Name": "Analog Electronics Circuits", "Credits": "3.0", "Sem": "5", "Category": "PC"}, {"Course Code": "ECL311", "Course Name": "VLSI Technology", "Credits": "3.0", "Sem": "6", "Category": "PC"}],
+            "EE": [{"Course Code": "EEL202", "Course Name": "Analog Circuits", "Credits": "4.0", "Sem": "3", "Category": "PC"}, {"Course Code": "EEL204", "Course Name": "Engineering Electromagnetics", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "EEL205", "Course Name": "Control System", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "EEL303", "Course Name": "Power Electronics", "Credits": "3.0", "Sem": "5", "Category": "PC"}],
+            "MT": [{"Course Code": "MTL201", "Course Name": "Fluid Power System", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MEL231", "Course Name": "Engineering Mechanics", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MTL301", "Course Name": "Fundamental of Robotics", "Credits": "3.0", "Sem": "5", "Category": "PC"}, {"Course Code": "MTP302", "Course Name": "Mechatronics Lab", "Credits": "1.5", "Sem": "6", "Category": "PC"}],
+            "ME": [{"Course Code": "MEL211", "Course Name": "Thermodynamics", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MEL251", "Course Name": "Casting, Forming and Welding", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MEL232", "Course Name": "Mechanics of Solids", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "MEL212", "Course Name": "Fluid Mechanics", "Credits": "3.0", "Sem": "4", "Category": "PC"}, {"Course Code": "MEL313", "Course Name": "Heat and Mass Transfer", "Credits": "3.5", "Sem": "5", "Category": "PC"}, {"Course Code": "MEL351", "Course Name": "Machining and Machine Tools", "Credits": "3.0", "Sem": "5", "Category": "PC"}],
+            "MSME": [{"Course Code": "MML201", "Course Name": "Thermodynamics of Materials", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MML202", "Course Name": "Structure of Materials", "Credits": "3.0", "Sem": "3", "Category": "PC"}, {"Course Code": "MML251", "Course Name": "Physical Properties of material", "Credits": "1.0", "Sem": "4", "Category": "PC"}, {"Course Code": "MML301", "Course Name": "Materials Characterization-Spectroscopy", "Credits": "3.0", "Sem": "5", "Category": "PC"}, {"Course Code": "MMI302", "Course Name": "Iron and Steel Making", "Credits": "3.0", "Sem": "5", "Category": "PC"}, {"Course Code": "MML401", "Course Name": "Environmental Degradation of Material", "Credits": "1.0", "Sem": "6", "Category": "PC"}]
+        };
 
-            const year = document.getElementById('year').value;
-            const semester = document.getElementById('semester').value;
-            const branch = document.getElementById('branch').value;
-            
-            const roles = [];
-            document.querySelectorAll('input[name="roles"]:checked').forEach(cb => roles.push(cb.value));
+        const branches = ["CSE", "DSAI", "ECE", "EE", "MT", "ME", "MSME"];
+        const semesters = ["1", "2", "3", "4", "5", "6", "7"];
+        const roles = {
+            "Software Engineer": ["CSL100", "CSL202", "CSL251", "CSL252", "CSL301", "CSL303", "CSP352"],
+            "Data Scientist / AI": ["MAL403", "DSL201", "CS1304", "DSL251", "DSL351"],
+            "VLSI / Electronics": ["ECL201", "ECL203", "ECL214", "ECL304", "ECL311"],
+            "Robotics & Mechatronics": ["ECL211", "EEL205", "MTL201", "MTL301", "MTP302"],
+            "Core Mechanical": ["MEL211", "MEL231", "MEL251", "MEL212", "MEL232", "MEL313", "MEL351"],
+            "Materials Scientist": ["MML201", "MML202", "MML251", "MML301", "MMI302", "MML401"]
+        };
 
-            try {
-                const response = await fetch('/recommend', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ year, semester, branch, job_roles: roles })
-                });
-                
-                const data = await response.json();
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `<strong>AI Recommendation:</strong><br><br>${data.recommendation.replace(/\n/g, '<br>')}`;
-            } catch (error) {
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = "Error generating recommendation. Please try again.";
-            } finally {
-                btn.innerText = "Get Course Recommendations";
-                btn.disabled = false;
+        function init() {
+            // Render Branch Grid
+            document.getElementById('branch-options').innerHTML = branches.map(b => 
+                `<label class="option-label">
+                    <input type="radio" name="branch" value="${b}">
+                    <div class="option-card">${b}</div>
+                </label>`
+            ).join('');
+
+            // Render Semester Grid
+            document.getElementById('sem-options').innerHTML = semesters.map(s => 
+                `<label class="option-label">
+                    <input type="radio" name="sem" value="${s}">
+                    <div class="option-card">Sem ${s}</div>
+                </label>`
+            ).join('');
+
+            // Render Role Grid
+            document.getElementById('role-options').innerHTML = Object.keys(roles).map(r => 
+                `<label class="option-label">
+                    <input type="radio" name="role" value="${r}">
+                    <div class="option-card">${r}</div>
+                </label>`
+            ).join('');
+        }
+
+        function submitForm() {
+            const branch = document.querySelector('input[name="branch"]:checked')?.value;
+            const sem = document.querySelector('input[name="sem"]:checked')?.value;
+            const role = document.querySelector('input[name="role"]:checked')?.value;
+
+            if (!branch || !sem || !role) {
+                alert("Please make a selection in all three sections to continue.");
+                return;
             }
-        });
+
+            document.getElementById('form-view').style.display = 'none';
+            document.getElementById('results-view').style.display = 'block';
+            window.scrollTo(0, 0);
+            
+            document.getElementById('results-desc').innerHTML = 
+                `Personalized curriculum for <strong>${branch}</strong> targeting <strong>${role}</strong> roles, starting from Semester ${sem}.`;
+
+            generateRoadmap(branch, sem, role);
+        }
+
+        function generateRoadmap(branch, currentSem, role) {
+            const content = document.getElementById('roadmap-content');
+            let html = '';
+            
+            const roleCodes = roles[role];
+            const branchCourses = dbData[branch] || [];
+
+            // Group by semester >= currentSem
+            const coursesBySem = {};
+            branchCourses.forEach(course => {
+                const s = parseInt(course.Sem);
+                if (s >= parseInt(currentSem)) {
+                    if (!coursesBySem[s]) coursesBySem[s] = [];
+                    coursesBySem[s].push(course);
+                }
+            });
+
+            if (Object.keys(coursesBySem).length === 0) {
+                content.innerHTML = `<div class="form-card" style="text-align:center;">No upcoming courses found in the database.</div>`;
+                return;
+            }
+
+            Object.keys(coursesBySem).sort((a,b)=>a-b).forEach(s => {
+                html += `<div class="semester-group">
+                            <div class="semester-badge">Semester ${s}</div>
+                            <div class="course-list">`;
+                
+                coursesBySem[s].forEach(course => {
+                    const isRecommended = roleCodes.includes(course["Course Code"]);
+                    
+                    html += `
+                        <div class="course-item ${isRecommended ? 'recommended' : ''}">
+                            <div>
+                                <div class="course-code">${course["Course Code"]}</div>
+                                <h3 class="course-name">${course["Course Name"]}</h3>
+                                <div class="course-meta">
+                                    <span>Credits: <strong>${course["Credits"]}</strong></span>
+                                    <span>•</span>
+                                    <span>Type: ${course["Category"]}</span>
+                                </div>
+                            </div>
+                            ${isRecommended ? `
+                            <div>
+                                <div class="star-badge">✨ Core Pick</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+
+            content.innerHTML = html;
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
