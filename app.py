@@ -1,40 +1,75 @@
 import os
-import json
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from google import genai
-from google.genai import types
+import pandas as pd
+from flask import Flask, render_template, request, jsonify
+import google.generativeai as genai
 
 app = Flask(__name__)
-CORS(app)
 
-client = genai.Client(api_key=os.environ.get("GEMMA_API_KEY"))
+# Configure your API Key (Set this in your Render environment variables)
+# If Gemma 4.0 is available via Vertex/Studio, replace the model name below. 
+# Here we use 'gemini-1.5-flash' as the placeholder for the generative model.
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "YOUR_DEFAULT_KEY")
+genai.configure(api_key=GOOGLE_API_KEY)
 
-# Exactly 3 courses. Perfectly formatted.
-COURSES = [
-    {"code": "CSL201", "name": "Discrete Mathematics", "category": "PC", "semester": 3, "branch": "CSE", "slot": "A"},
-    {"code": "DSL201", "name": "Math Foundations for DS", "category": "PC", "semester": 3, "branch": "DSAI", "slot": "B2"},
-    {"code": "DSL504", "name": "Natural Language Processing", "category": "PE", "semester": "Elective", "branch": "DSAI", "slot": "M"}
-]
+DATABASE_FILE = "PathFinder Database.xlsx"
 
-@app.route("/")
+def get_available_courses(branch, sem):
+    """Fetch courses for the given branch and semester from the Excel database."""
+    try:
+        # The sheet names in the DB match the branches (e.g., 'CSE', 'DSAI')
+        df = pd.read_excel(DATABASE_FILE, sheet_name=branch)
+        # Filter by semester
+        sem_courses = df[df['Sem'] == int(sem)]
+        
+        course_list = []
+        for index, row in sem_courses.iterrows():
+            course_list.append(f"{row['Course Code']}: {row['Course Name']} ({row['Credits']} Credits) - {row['Category']}")
+        return "\n".join(course_list)
+    except Exception as e:
+        print(f"Database error: {e}")
+        return "Course data unavailable for this selection."
+
+@app.route('/')
 def index():
-    return "OptiCourse Backend is LIVE!"
+    return render_template('index.html')
 
-@app.route("/api/recommend", methods=["POST"])
+@app.route('/recommend', methods=['POST'])
 def recommend():
     data = request.json
-    mandatory = [c for c in COURSES if c.get("branch") == data["branch"] and str(c.get("semester")) == str(data["semester"])]
-    electives = [c for c in COURSES if c.get("category") in ["PE", "OE"]]
-
+    year = data.get('year')
+    semester = data.get('semester')
+    branch = data.get('branch')
+    job_roles = data.get('job_roles', [])
+    
+    # 1. Fetch available courses for this specific branch and semester
+    available_courses = get_available_courses(branch, semester)
+    
+    # 2. Build the prompt for Gemma
     prompt = f"""
-    Student Profile: Branch: {data['branch']}, Target Role: {data['dream_role']}, Interests: {data['interests']}.
-    Mandatory Core Courses available: {json.dumps(mandatory)}
-    Elective Courses available: {json.dumps(electives)}
-    Task: Select all mandatory courses, and pick the 2 most relevant electives for their dream role.
-    Output strictly as JSON matching this schema:
-    {{"mandatory": [{{"code": "...", "name": "...", "slot": "...", "reason": "..."}}], "electives": [{{"code": "...", "name": "...", "slot": "...", "reason": "..."}}], "strategy": "..."}}
+    You are an academic advisor for IIT Bhilai. A {year} Year student in the {branch} branch 
+    (Semester {semester}) is registering for courses. 
+    
+    Their career interests include: {', '.join(job_roles)}.
+    
+    Here is the list of courses available to them this semester based on the curriculum:
+    {available_courses}
+    
+    Based on their career goals, recommend the best combination of these courses for this semester. 
+    Explain why this combination is ideal for their chosen job roles. Keep the tone encouraging and professional.
     """
+    
+    # 3. Call the AI Model
+    try:
+        # Replace with your specific Gemma endpoint if using Vertex AI, 
+        # or use standard Gemini models available via the API
+        model = genai.GenerativeModel('gemini-1.5-flash') 
+        response = model.generate_content(prompt)
+        return jsonify({"recommendation": response.text})
+    except Exception as e:
+        return jsonify({"recommendation": f"Error generating recommendation: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))    """
 
     try:
         response = client.models.generate_content(
