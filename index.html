@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PathFinder | IIT Bhilai Registration Assistant</title>
+  <style>
+    :root {
+      --bg: #0e1e17;
+      --card-bg: #142a20;
+      --accent: #2ecc71;
+      --text: #f0f4f1;
+      --subtext: #9eb3a4;
+      --border: #234433;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+    header h1 { font-size: 1.8rem; color: var(--accent); }
+    header p { color: var(--subtext); font-size: 0.95rem; }
+    .layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 2rem; }
+    .form-card, .results-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--subtext); }
+    select, input, textarea { width: 100%; padding: 0.6rem; border-radius: 4px; border: 1px solid var(--border); background: #0c1812; color: #fff; font-size: 0.9rem; }
+    button { width: 100%; padding: 0.8rem; background: var(--accent); color: #07130c; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; }
+    button:hover { opacity: 0.9; }
+    .course-item { background: #0b1812; border-left: 3px solid var(--accent); padding: 0.8rem; margin-bottom: 0.8rem; border-radius: 0 4px 4px 0; }
+    .course-title { font-weight: 600; font-size: 0.95rem; }
+    .course-meta { font-size: 0.8rem; color: var(--subtext); margin: 0.2rem 0; }
+    .course-reason { font-size: 0.85rem; color: #d0ded4; }
+    .strategy-box { background: #1b382b; padding: 1rem; border-radius: 4px; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>PathFinder</h1>
+      <p>IIT Bhilai Course Registration Assistant</p>
+    </header>
+
+    <div class="layout">
+      <!-- Input Panel -->
+      <div class="form-card">
+        <form id="regForm">
+          <div class="form-group">
+            <label>Program</label>
+            <select id="program">
+              <option value="BTech">B.Tech</option>
+              <option value="MTech">M.Tech</option>
+              <option value="MSc">M.Sc</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Current Year</label>
+            <select id="year">
+              <option value="1">1st Year</option>
+              <option value="2" selected>2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Semester</label>
+            <select id="semester">
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+              <option value="3" selected>Semester 3</option>
+              <option value="4">Semester 4</option>
+              <option value="5">Semester 5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Enrolled Branch</label>
+            <select id="branch">
+              <option value="CSE" selected>Computer Science & Engineering</option>
+              <option value="DSAI">Data Science & AI</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="EE">Electrical Engineering</option>
+              <option value="ME">Mechanical Engineering</option>
+              <option value="MSME">Materials Science & Metallurgical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Secondary Branch of Interest (Elective focus)</label>
+            <select id="target_branch">
+              <option value="DSAI" selected>Data Science & AI</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="MT">Mechatronics</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dream Future Role</label>
+            <input type="text" id="dream_role" value="Machine Learning Systems Engineer" required>
+          </div>
+          <div class="form-group">
+            <label>Technical Interests & Domains</label>
+            <textarea id="interests" rows="3">Deep learning infrastructure, GPU programming, low-latency data pipelines</textarea>
+          </div>
+          <button type="submit" id="submitBtn">Generate Optimal Schedule</button>
+        </form>
+      </div>
+
+      <!-- Results Display -->
+      <div class="results-card">
+        <div id="placeholder" style="color: var(--subtext); text-align: center; margin-top: 4rem;">
+          Configure your details on the left and submit to view personalized recommendations.
+        </div>
+        <div id="results" style="display: none;">
+          <div class="strategy-box">
+            <strong>Target Alignment Strategy:</strong>
+            <p id="strategyText" style="margin-top: 0.3rem;"></p>
+          </div>
+          <h3 style="margin-bottom: 0.8rem; font-size: 1rem; color: var(--accent);">Mandatory Branch Cores</h3>
+          <div id="mandatoryContainer"></div>
+
+          <h3 style="margin: 1.2rem 0 0.8rem 0; font-size: 1rem; color: var(--accent);">Recommended Career Electives</h3>
+          <div id="electiveContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("regForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.innerText = "Analyzing Catalog...";
+      btn.disabled = true;
+
+      const payload = {
+        program: document.getElementById("program").value,
+        year: document.getElementById("year").value,
+        semester: document.getElementById("semester").value,
+        branch: document.getElementById("branch").value,
+        target_branch: document.getElementById("target_branch").value,
+        dream_role: document.getElementById("dream_role").value,
+        interests: document.getElementById("interests").value
+      };
+
+      try {
+        const res = await fetch("/api/recommend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: json.stringify(payload)
+        });
+        const jsonRes = await res.json();
+        if (jsonRes.success) {
+          renderResults(jsonRes.data);
+        } else {
+          alert("Error: " + jsonRes.error);
+        }
+      } catch (err) {
+        alert("Failed to reach server");
+      } finally {
+        btn.innerText = "Generate Optimal Schedule";
+        btn.disabled = false;
+      }
+    });
+
+    function renderResults(data) {
+      document.getElementById("placeholder").style.display = "none";
+      document.getElementById("results").style.display = "block";
+      document.getElementById("strategyText").innerText = data.career_alignment_strategy;
+
+      const mContainer = document.getElementById("mandatoryContainer");
+      mContainer.innerHTML = data.mandatory_courses.map(c => `
+        <div class="course-item">
+          <div class="course-title">${c.code}: ${c.name}</div>
+          <div class="course-meta">Category: ${c.category} | Lecture Slot: ${c.slot}</div>
+          <div class="course-reason">${c.reason}</div>
+        </div>
+      `).join('');
+
+      const eContainer = document.getElementById("electiveContainer");
+      eContainer.innerHTML = data.recommended_electives.map(c => `
+        <div class="course-item" style="border-left-color: #3498db;">
+          <div class="course-title">${c.code}: ${c.name}</div>
+          <div class="course-meta">Category: ${c.category} | Lecture Slot: ${c.slot}</div>
+          <div class="course-reason">${c.reason}</div>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
